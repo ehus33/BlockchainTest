@@ -9,7 +9,6 @@ class Blockchain:
         self.chain = []
         self.current_transactions = []
 
-        # Create the genesis block
         self.new_block(previous_hash='1', proof=100, message="In memory of Dražen Petrović, the Mozart of Basketball")
 
     def new_block(self, proof, previous_hash=None, message=None):
@@ -29,7 +28,6 @@ class Blockchain:
             'message': message or "Keep the Mamba Mentality alive!"  # Default message in each block
         }
 
-        # Reset the current list of transactions
         self.current_transactions = []
 
         self.chain.append(block)
@@ -63,7 +61,6 @@ class Blockchain:
         :return: <str>
         """
 
-        # We must make sure that the Dictionary is Ordered, or we'll have inconsistent hashes
         block_string = json.dumps(block, sort_keys=True).encode()
         return hashlib.sha256(block_string).hexdigest()
 
@@ -95,28 +92,22 @@ class Blockchain:
         guess_hash = hashlib.sha256(guess).hexdigest()
         return guess_hash[:4] == "0000"
 
-# Instantiate the Blockchain
 blockchain = Blockchain()
 
-# Flask server to handle the blockchain API
 app = Flask(__name__)
 
 @app.route('/mine', methods=['GET'])
 def mine():
-    # Run the proof of work algorithm to get the next proof...
     last_block = blockchain.last_block
     last_proof = last_block['proof']
     proof = blockchain.proof_of_work(last_proof)
 
-    # Reward the miner for their work
-    # The sender is "0" to signify that this node has mined a new coin.
     blockchain.new_transaction(
         sender="0",
         recipient=str(uuid4()).replace('-', ''),
         amount=1,
     )
 
-    # Forge the new Block by adding it to the chain
     block = blockchain.new_block(proof, message="In honor of Dražen Petrović")
 
     response = {
@@ -133,12 +124,10 @@ def mine():
 def new_transaction():
     values = request.get_json()
 
-    # Check that the required fields are in the POST'ed data
     required = ['sender', 'recipient', 'amount']
     if not all(k in values for k in required):
         return 'Missing values', 400
 
-    # Create a new Transaction
     index = blockchain.new_transaction(values['sender'], values['recipient'], values['amount'])
 
     response = {'message': f'Transaction will be added to Block {index}'}
